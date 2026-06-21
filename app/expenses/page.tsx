@@ -1,0 +1,34 @@
+import { createClient } from "@/lib/supabase/server"
+import { redirect } from "next/navigation"
+import { DashboardLayout } from "@/components/layout/dashboard-layout"
+import { ExpensesList } from "@/components/expenses/expenses-list"
+
+export default async function ExpensesPage() {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser()
+  if (error || !user) {
+    redirect("/auth/login")
+  }
+
+  // Fetch user profile to check role
+  const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle()
+
+  // Fetch all expenses
+  const { data: expenses } = await supabase.from("expenses").select("*").order("expense_date", { ascending: false })
+
+  return (
+    <DashboardLayout>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Expense Tracking</h1>
+          <p className="mt-2 text-sm text-gray-600">Record and manage business expenses</p>
+        </div>
+        <ExpensesList expenses={expenses || []} isAdmin={profile?.role === "admin"} userId={user.id} />
+      </div>
+    </DashboardLayout>
+  )
+}
