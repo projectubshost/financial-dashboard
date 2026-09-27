@@ -1,5 +1,2 @@
--- Promote the current user to admin role
--- Replace the email with your actual email if needed
-UPDATE public.profiles
-SET role = 'admin'
-WHERE email = 'piggywiggychiggy22@gmail.com';
+-- Retired: never hardcode a user's email to grant administrator privileges.
+-- New Supabase projects assign admin to the first account through scripts/002_create_profile_trigger.sql.

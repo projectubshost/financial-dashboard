@@ -29,7 +29,15 @@ export default function LoginPage() {
         email,
         password,
       })
-      if (error) throw error
+      if (error) {
+        if (error.code === "email_not_confirmed") {
+          throw new Error("Confirm your email before signing in.")
+        }
+        if (error.code === "invalid_credentials") {
+          throw new Error("Invalid email or password.")
+        }
+        throw new Error("Unable to sign in right now. Please try again.")
+      }
       router.push("/dashboard")
       router.refresh()
     } catch (error: unknown) {

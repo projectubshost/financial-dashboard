@@ -43,9 +43,7 @@ export function AddEmployeeDialog({ open, onOpenChange }: AddEmployeeDialogProps
     const supabase = createClient()
 
     try {
-      console.log("[v0] Attempting to insert employee:", formData)
-
-      const { data, error: insertError } = await supabase
+      const { error: insertError } = await supabase
         .from("employees")
         .insert({
           full_name: formData.full_name,
@@ -54,13 +52,8 @@ export function AddEmployeeDialog({ open, onOpenChange }: AddEmployeeDialogProps
           hire_date: formData.hire_date,
           status: formData.status,
         })
-        .select()
-
-      console.log("[v0] Insert result:", { data, error: insertError })
 
       if (insertError) throw insertError
-
-      console.log("[v0] Employee added successfully, refreshing page")
 
       setFormData({
         full_name: "",
@@ -72,7 +65,6 @@ export function AddEmployeeDialog({ open, onOpenChange }: AddEmployeeDialogProps
       onOpenChange(false)
       router.refresh()
     } catch (err) {
-      console.error("[v0] Error adding employee:", err)
       setError(err instanceof Error ? err.message : "An error occurred")
     } finally {
       setIsLoading(false)

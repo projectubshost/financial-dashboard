@@ -16,22 +16,16 @@ export default async function EmployeesPage() {
     redirect("/auth/login")
   }
 
-  console.log("[v0] Fetching profile for user:", user.id)
-
   // Fetch user profile to check role
   const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle()
-
-  console.log("[v0] Profile data:", profile)
 
   const isAdmin = profile?.role === "admin"
 
   if (isAdmin) {
-    const { data: employees, error: employeesError } = await supabase
+    const { data: employees } = await supabase
       .from("employees")
       .select("*")
       .order("created_at", { ascending: false })
-
-    console.log("[v0] Employees data:", { count: employees?.length || 0, employees, error: employeesError })
 
     return (
       <DashboardLayout>
@@ -45,9 +39,10 @@ export default async function EmployeesPage() {
       </DashboardLayout>
     )
   } else {
-    const { count, error: countError } = await supabase.from("employees").select("*", { count: "exact", head: true })
-
-    console.log("[v0] Employee count:", { count, error: countError })
+    const { count } = await supabase
+      .from("employees")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "active")
 
     return (
       <DashboardLayout>
@@ -59,7 +54,7 @@ export default async function EmployeesPage() {
           <Card>
             <CardHeader>
               <CardTitle>Total Employees</CardTitle>
-              <CardDescription>Current number of employees in the organization</CardDescription>
+              <CardDescription>Current number of active employees in the organization</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-4">

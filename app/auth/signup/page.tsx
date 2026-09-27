@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
@@ -16,7 +15,6 @@ export default function SignUpPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [fullName, setFullName] = useState("")
-  const [role, setRole] = useState<"admin" | "employee">("employee")
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
@@ -32,10 +30,10 @@ export default function SignUpPage() {
         email,
         password,
         options: {
-          emailRedirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/dashboard`,
+          emailRedirectTo:
+            process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL ?? `${window.location.origin}/auth/callback`,
           data: {
             full_name: fullName,
-            role: role,
           },
         },
       })
@@ -98,18 +96,9 @@ export default function SignUpPage() {
                     className="border-emerald-200 focus:border-emerald-500"
                   />
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="role">Role</Label>
-                  <Select value={role} onValueChange={(value: "admin" | "employee") => setRole(value)}>
-                    <SelectTrigger className="border-emerald-200 focus:border-emerald-500">
-                      <SelectValue placeholder="Select role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="employee">Employee</SelectItem>
-                      <SelectItem value="admin">Admin</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                <p className="rounded-md bg-emerald-50 p-3 text-sm text-emerald-800">
+                  The first account is the administrator. New accounts are added as employees.
+                </p>
                 {error && <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">{error}</div>}
                 <Button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700" disabled={isLoading}>
                   {isLoading ? "Creating account..." : "Sign Up"}
