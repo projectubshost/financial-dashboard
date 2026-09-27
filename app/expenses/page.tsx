@@ -5,29 +5,32 @@ import { ExpensesList } from "@/components/expenses/expenses-list"
 
 export default async function ExpensesPage() {
   const supabase = await createClient()
-
   const {
-    data: { user },
+    data,
     error,
-  } = await supabase.auth.getUser()
-  if (error || !user) {
+  } = await supabase.auth.getClaims()
+  const claims = data?.claims
+
+  if (error || !claims?.sub) {
     redirect("/auth/login")
   }
 
-  // Fetch user profile to check role
-  const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle()
-
-  // Fetch all expenses
-  const { data: expenses } = await supabase.from("expenses").select("*").order("expense_date", { ascending: false })
+  const [profileResult, expensesResult] = await Promise.all([
+    supabase.from("profiles").select("full_name, email, role").eq("id", claims.sub).maybeSingle(),
+    supabase
+      .from("expenses")
+      .select("id, description, amount, expense_date, category")
+      .order("expense_date", { ascending: false }),
+  ])
 
   return (
-    <DashboardLayout>
+    <DashboardLayout profile={profileResult.data}>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Expense Tracking</h1>
+          <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">Expense Tracking</h1>
           <p className="mt-2 text-sm text-gray-600">Record and manage business expenses</p>
         </div>
-        <ExpensesList expenses={expenses || []} isAdmin={profile?.role === "admin"} userId={user.id} />
+        <ExpensesList expenses={expensesResult.data || []} isAdmin={profileResult.data?.role === "admin"} userId={claims.sub} />
       </div>
     </DashboardLayout>
   )

@@ -19,6 +19,9 @@ export interface Employee {
   updated_at: string
 }
 
+export type EmployeeMetric = Pick<Employee, "status" | "salary">
+export type EmployeeReportRecord = Pick<Employee, "full_name" | "position" | "salary" | "hire_date" | "status">
+
 export interface Sale {
   id: string
   description: string
@@ -30,6 +33,8 @@ export interface Sale {
   updated_at: string
 }
 
+export type SaleRecord = Pick<Sale, "id" | "description" | "amount" | "sale_date" | "category">
+
 export interface Expense {
   id: string
   description: string
@@ -40,3 +45,7 @@ export interface Expense {
   created_at: string
   updated_at: string
 }
+
+export type ExpenseRecord = Pick<Expense, "id" | "description" | "amount" | "expense_date" | "category">
+export type ExpenseReportRecord = Pick<Expense, "description" | "amount" | "expense_date" | "category">
+export type SaleReportRecord = Pick<Sale, "description" | "amount" | "sale_date" | "category">

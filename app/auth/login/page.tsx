@@ -38,8 +38,7 @@ export default function LoginPage() {
         }
         throw new Error("Unable to sign in right now. Please try again.")
       }
-      router.push("/dashboard")
-      router.refresh()
+      router.replace("/dashboard")
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred")
     } finally {

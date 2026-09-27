@@ -5,27 +5,41 @@ import { ReportsView } from "@/components/reports/reports-view"
 
 export default async function ReportsPage() {
   const supabase = await createClient()
-
   const {
-    data: { user },
+    data,
     error,
-  } = await supabase.auth.getUser()
-  if (error || !user) {
+  } = await supabase.auth.getClaims()
+  const claims = data?.claims
+
+  if (error || !claims?.sub) {
     redirect("/auth/login")
   }
 
-  // Fetch all data for reports
-  const [employeesResult, salesResult, expensesResult] = await Promise.all([
-    supabase.from("employees").select("*").order("created_at", { ascending: false }),
-    supabase.from("sales").select("*").order("sale_date", { ascending: false }),
-    supabase.from("expenses").select("*").order("expense_date", { ascending: false }),
+  const [profileResult, employeesResult, salesResult, expensesResult] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("full_name, email, role")
+      .eq("id", claims.sub)
+      .maybeSingle(),
+    supabase
+      .from("employees")
+      .select("full_name, position, salary, hire_date, status")
+      .order("hire_date", { ascending: false }),
+    supabase
+      .from("sales")
+      .select("id, description, amount, sale_date, category")
+      .order("sale_date", { ascending: false }),
+    supabase
+      .from("expenses")
+      .select("id, description, amount, expense_date, category")
+      .order("expense_date", { ascending: false }),
   ])
 
   return (
-    <DashboardLayout>
+    <DashboardLayout profile={profileResult.data}>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Reports & Export</h1>
+          <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">Reports &amp; Export</h1>
           <p className="mt-2 text-sm text-gray-600">Generate reports and export data for analysis</p>
         </div>
         <ReportsView

@@ -100,10 +100,10 @@ export function EmployeeList({ employees, isAdmin }: EmployeeListProps) {
                       {isAdmin && (
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
-                            <Button variant="ghost" size="sm" onClick={() => setEditingEmployee(employee)}>
+                            <Button variant="ghost" size="sm" aria-label={`Edit ${employee.full_name}`} onClick={() => setEditingEmployee(employee)}>
                               <Pencil className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="sm" onClick={() => setDeletingEmployee(employee)}>
+                            <Button variant="ghost" size="sm" aria-label={`Delete ${employee.full_name}`} onClick={() => setDeletingEmployee(employee)}>
                               <Trash2 className="h-4 w-4 text-red-600" />
                             </Button>
                           </div>

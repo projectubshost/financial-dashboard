@@ -1,16 +1,39 @@
 "use client"
 
+import dynamic from "next/dynamic"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Users, TrendingUp, Receipt, DollarSign, ArrowUpRight, ArrowDownRight } from "lucide-react"
-import type { Employee, Sale, Expense } from "@/lib/types"
-import { RevenueChart } from "./revenue-chart"
-import { ExpensesByCategoryChart } from "./expenses-by-category-chart"
+import type { EmployeeMetric, SaleRecord, ExpenseRecord } from "@/lib/types"
 import { RecentTransactions } from "./recent-transactions"
 
+function ChartLoadingPlaceholder() {
+  return (
+    <Card aria-hidden="true" className="min-w-0">
+      <CardHeader>
+        <Skeleton className="h-5 w-40" />
+        <Skeleton className="h-4 w-52" />
+      </CardHeader>
+      <CardContent>
+        <Skeleton className="h-[280px] w-full" />
+      </CardContent>
+    </Card>
+  )
+}
+
+const RevenueChart = dynamic(() => import("./revenue-chart").then((module) => module.RevenueChart), {
+  ssr: false,
+  loading: () => <ChartLoadingPlaceholder />,
+})
+const ExpensesByCategoryChart = dynamic(
+  () => import("./expenses-by-category-chart").then((module) => module.ExpensesByCategoryChart),
+  { ssr: false, loading: () => <ChartLoadingPlaceholder /> },
+)
+
 interface DashboardOverviewProps {
-  employees: Employee[]
-  sales: Sale[]
-  expenses: Expense[]
+  employees: EmployeeMetric[]
+  sales: SaleRecord[]
+  expenses: ExpenseRecord[]
 }
 
 export function DashboardOverview({ employees, sales, expenses }: DashboardOverviewProps) {
@@ -132,7 +155,7 @@ export function DashboardOverview({ employees, sales, expenses }: DashboardOverv
       </div>
 
       {/* Charts */}
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid min-w-0 gap-6 lg:grid-cols-2">
         <RevenueChart sales={sales} expenses={expenses} />
         <ExpensesByCategoryChart expenses={expenses} />
       </div>

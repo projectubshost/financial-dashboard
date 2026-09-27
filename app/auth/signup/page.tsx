@@ -26,7 +26,7 @@ export default function SignUpPage() {
     setError(null)
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -37,10 +37,23 @@ export default function SignUpPage() {
           },
         },
       })
-      if (error) throw error
-      router.push("/auth/signup-success")
-    } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "An error occurred")
+
+      if (error) {
+        if (error.code === "weak_password") {
+          setError("Choose a stronger password and try again.")
+        } else if (error.code === "over_email_send_rate_limit") {
+          setError("Too many signup attempts. Please wait a little while and try again.")
+        } else if (error.code === "email_address_invalid") {
+          setError("Enter a valid email address.")
+        } else {
+          setError("Unable to create an account with these details. Please review your information and try again.")
+        }
+        return
+      }
+
+      router.replace(data.session ? "/dashboard" : "/auth/signup-success")
+    } catch {
+      setError("Unable to create an account right now. Please try again.")
     } finally {
       setIsLoading(false)
     }

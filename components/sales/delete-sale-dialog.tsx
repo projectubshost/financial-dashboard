@@ -13,10 +13,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { AlertTriangle } from "lucide-react"
-import type { Sale } from "@/lib/types"
+import type { SaleRecord } from "@/lib/types"
 
 interface DeleteSaleDialogProps {
-  sale: Sale
+  sale: SaleRecord
   open: boolean
   onOpenChange: (open: boolean) => void
 }

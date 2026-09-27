@@ -7,17 +7,28 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { Download, FileText, Users, TrendingUp, Receipt } from "lucide-react"
-import type { Employee, Sale, Expense } from "@/lib/types"
+import type { EmployeeReportRecord, SaleReportRecord, ExpenseReportRecord } from "@/lib/types"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 interface ReportsViewProps {
-  employees: Employee[]
-  sales: Sale[]
-  expenses: Expense[]
+  employees: EmployeeReportRecord[]
+  sales: SaleReportRecord[]
+  expenses: ExpenseReportRecord[]
+}
+
+type DateRange = "all" | "month" | "quarter" | "year" | "custom"
+type CsvValue = string | number | null | undefined
+type CsvRow = Record<string, CsvValue>
+
+function toDateKey(date: Date) {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, "0")
+  const day = String(date.getDate()).padStart(2, "0")
+  return `${year}-${month}-${day}`
 }
 
 export function ReportsView({ employees, sales, expenses }: ReportsViewProps) {
-  const [dateRange, setDateRange] = useState<"all" | "month" | "quarter" | "year" | "custom">("all")
+  const [dateRange, setDateRange] = useState<DateRange>("all")
   const [startDate, setStartDate] = useState("")
   const [endDate, setEndDate] = useState("")
 
@@ -35,59 +46,64 @@ export function ReportsView({ employees, sales, expenses }: ReportsViewProps) {
     if (dateRange === "all") return items
 
     const now = new Date()
-    let filterStartDate: Date
+    let firstDay: Date
 
     switch (dateRange) {
       case "month":
-        filterStartDate = new Date(now.getFullYear(), now.getMonth(), 1)
+        firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
         break
       case "quarter":
-        filterStartDate = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1)
+        firstDay = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1)
         break
       case "year":
-        filterStartDate = new Date(now.getFullYear(), 0, 1)
+        firstDay = new Date(now.getFullYear(), 0, 1)
         break
       case "custom":
-        if (!startDate || !endDate) return items
+        if (!startDate || !endDate || startDate > endDate) return []
         return items.filter((item) => {
-          const itemDate = new Date(item[dateField] as string)
-          return itemDate >= new Date(startDate) && itemDate <= new Date(endDate)
+          const itemDate = item[dateField]?.slice(0, 10)
+          return Boolean(itemDate && itemDate >= startDate && itemDate <= endDate)
         })
       default:
         return items
     }
 
+    const firstDayKey = toDateKey(firstDay)
+    const todayKey = toDateKey(now)
+
     return items.filter((item) => {
-      const itemDate = new Date(item[dateField] as string)
-      return itemDate >= filterStartDate
+      const itemDate = item[dateField]?.slice(0, 10)
+      return Boolean(itemDate && itemDate >= firstDayKey && itemDate <= todayKey)
     })
   }
 
   const filteredSales = filterByDate(sales, "sale_date")
   const filteredExpenses = filterByDate(expenses, "expense_date")
+  const isCustomRangeValid = dateRange !== "custom" || Boolean(startDate && endDate && startDate <= endDate)
 
-  const exportToCSV = (data: any[], filename: string, headers: string[]) => {
+  const exportToCSV = (data: CsvRow[], filename: string, headers: string[]) => {
+    const escapeCell = (value: CsvValue) => {
+      const cellValue = value == null ? "" : String(value)
+      const firstVisibleCharacter = typeof value === "string" ? value.trimStart().slice(0, 1) : ""
+      const isSpreadsheetFormula = ["=", "+", "-", "@"].includes(firstVisibleCharacter)
+      const safeValue = isSpreadsheetFormula ? `'${cellValue}` : cellValue
+      return `"${safeValue.replace(/"/g, '""')}"`
+    }
     const csvContent = [
-      headers.join(","),
-      ...data.map((row) =>
-        headers
-          .map((header) => {
-            const value = row[header.toLowerCase().replace(/ /g, "_")]
-            return typeof value === "string" && value.includes(",") ? `"${value}"` : value
-          })
-          .join(","),
-      ),
-    ].join("\n")
+      headers.map(escapeCell).join(","),
+      ...data.map((row) => headers.map((header) => escapeCell(row[header.toLowerCase().replace(/ /g, "_")])).join(",")),
+    ].join("\r\n")
 
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
+    const blob = new Blob([`\uFEFF${csvContent}`], { type: "text/csv;charset=utf-8;" })
     const link = document.createElement("a")
     const url = URL.createObjectURL(blob)
-    link.setAttribute("href", url)
-    link.setAttribute("download", `${filename}_${new Date().toISOString().split("T")[0]}.csv`)
-    link.style.visibility = "hidden"
+    link.href = url
+    link.download = `${filename}_${toDateKey(new Date())}.csv`
+    link.style.display = "none"
     document.body.appendChild(link)
     link.click()
-    document.body.removeChild(link)
+    link.remove()
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000)
   }
 
   const exportEmployees = () => {
@@ -153,7 +169,7 @@ export function ReportsView({ employees, sales, expenses }: ReportsViewProps) {
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <div className="space-y-2">
               <Label htmlFor="dateRange">Date Range</Label>
-              <Select value={dateRange} onValueChange={(value: any) => setDateRange(value)}>
+              <Select value={dateRange} onValueChange={(value) => setDateRange(value as DateRange)}>
                 <SelectTrigger id="dateRange">
                   <SelectValue />
                 </SelectTrigger>
@@ -171,15 +187,32 @@ export function ReportsView({ employees, sales, expenses }: ReportsViewProps) {
               <>
                 <div className="space-y-2">
                   <Label htmlFor="startDate">Start Date</Label>
-                  <Input id="startDate" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+                  <Input
+                    id="startDate"
+                    type="date"
+                    max={endDate || undefined}
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="endDate">End Date</Label>
-                  <Input id="endDate" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+                  <Input
+                    id="endDate"
+                    type="date"
+                    min={startDate || undefined}
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                  />
                 </div>
               </>
             )}
           </div>
+          {dateRange === "custom" && !isCustomRangeValid && (
+            <p className="mt-3 text-sm text-destructive" role="status">
+              Choose a valid start and end date to filter and export financial data.
+            </p>
+          )}
         </CardContent>
       </Card>
 
@@ -249,7 +282,7 @@ export function ReportsView({ employees, sales, expenses }: ReportsViewProps) {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <Button onClick={exportSales} className="w-full">
+                    <Button onClick={exportSales} className="w-full" disabled={!isCustomRangeValid}>
                       <Download className="mr-2 h-4 w-4" />
                       Export Sales ({filteredSales.length})
                     </Button>
@@ -269,7 +302,7 @@ export function ReportsView({ employees, sales, expenses }: ReportsViewProps) {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <Button onClick={exportExpenses} className="w-full">
+                    <Button onClick={exportExpenses} className="w-full" disabled={!isCustomRangeValid}>
                       <Download className="mr-2 h-4 w-4" />
                       Export Expenses ({filteredExpenses.length})
                     </Button>
@@ -289,7 +322,7 @@ export function ReportsView({ employees, sales, expenses }: ReportsViewProps) {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <Button onClick={exportFinancialSummary} className="w-full">
+                    <Button onClick={exportFinancialSummary} className="w-full" disabled={!isCustomRangeValid}>
                       <Download className="mr-2 h-4 w-4" />
                       Export Summary Report
                     </Button>

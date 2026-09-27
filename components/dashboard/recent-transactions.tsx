@@ -3,11 +3,11 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ArrowUpRight, ArrowDownRight } from "lucide-react"
-import type { Sale, Expense } from "@/lib/types"
+import type { SaleRecord, ExpenseRecord } from "@/lib/types"
 
 interface RecentTransactionsProps {
-  sales: Sale[]
-  expenses: Expense[]
+  sales: SaleRecord[]
+  expenses: ExpenseRecord[]
 }
 
 type Transaction = {

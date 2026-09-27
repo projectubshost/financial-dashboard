@@ -2,43 +2,43 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
-import type { Sale, Expense } from "@/lib/types"
+import type { SaleRecord, ExpenseRecord } from "@/lib/types"
 
 interface RevenueChartProps {
-  sales: Sale[]
-  expenses: Expense[]
+  sales: SaleRecord[]
+  expenses: ExpenseRecord[]
 }
 
 export function RevenueChart({ sales, expenses }: RevenueChartProps) {
-  // Group data by month for the last 6 months
-  const now = new Date()
-  const monthsData = []
+  const monthlyTotals = new Map<string, { revenue: number; expenses: number }>()
 
-  for (let i = 5; i >= 0; i--) {
-    const date = new Date(now.getFullYear(), now.getMonth() - i, 1)
-    const monthName = date.toLocaleDateString("en-US", { month: "short" })
-    const year = date.getFullYear()
-
-    const monthSales = sales.filter((sale) => {
-      const saleDate = new Date(sale.sale_date)
-      return saleDate.getMonth() === date.getMonth() && saleDate.getFullYear() === date.getFullYear()
-    })
-
-    const monthExpenses = expenses.filter((expense) => {
-      const expenseDate = new Date(expense.expense_date)
-      return expenseDate.getMonth() === date.getMonth() && expenseDate.getFullYear() === date.getFullYear()
-    })
-
-    const revenue = monthSales.reduce((sum, sale) => sum + sale.amount, 0)
-    const expense = monthExpenses.reduce((sum, exp) => sum + exp.amount, 0)
-
-    monthsData.push({
-      month: `${monthName} ${year}`,
-      revenue: Math.round(revenue),
-      expenses: Math.round(expense),
-      profit: Math.round(revenue - expense),
-    })
+  for (const sale of sales) {
+    const monthKey = sale.sale_date.slice(0, 7)
+    const totals = monthlyTotals.get(monthKey) ?? { revenue: 0, expenses: 0 }
+    totals.revenue += sale.amount
+    monthlyTotals.set(monthKey, totals)
   }
+
+  for (const expense of expenses) {
+    const monthKey = expense.expense_date.slice(0, 7)
+    const totals = monthlyTotals.get(monthKey) ?? { revenue: 0, expenses: 0 }
+    totals.expenses += expense.amount
+    monthlyTotals.set(monthKey, totals)
+  }
+
+  const now = new Date()
+  const monthsData = Array.from({ length: 6 }, (_, index) => {
+    const date = new Date(now.getFullYear(), now.getMonth() - 5 + index, 1)
+    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`
+    const totals = monthlyTotals.get(monthKey) ?? { revenue: 0, expenses: 0 }
+
+    return {
+      month: date.toLocaleDateString("en-US", { month: "short", year: "numeric" }),
+      revenue: Math.round(totals.revenue),
+      expenses: Math.round(totals.expenses),
+      profit: Math.round(totals.revenue - totals.expenses),
+    }
+  })
 
   return (
     <Card>

@@ -5,29 +5,29 @@ import { SalesList } from "@/components/sales/sales-list"
 
 export default async function SalesPage() {
   const supabase = await createClient()
-
   const {
-    data: { user },
+    data,
     error,
-  } = await supabase.auth.getUser()
-  if (error || !user) {
+  } = await supabase.auth.getClaims()
+  const claims = data?.claims
+
+  if (error || !claims?.sub) {
     redirect("/auth/login")
   }
 
-  // Fetch user profile to check role
-  const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle()
-
-  // Fetch all sales
-  const { data: sales } = await supabase.from("sales").select("*").order("sale_date", { ascending: false })
+  const [profileResult, salesResult] = await Promise.all([
+    supabase.from("profiles").select("full_name, email, role").eq("id", claims.sub).maybeSingle(),
+    supabase.from("sales").select("id, description, amount, sale_date, category").order("sale_date", { ascending: false }),
+  ])
 
   return (
-    <DashboardLayout>
+    <DashboardLayout profile={profileResult.data}>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Sales Tracking</h1>
+          <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">Sales Tracking</h1>
           <p className="mt-2 text-sm text-gray-600">Record and manage sales transactions</p>
         </div>
-        <SalesList sales={sales || []} isAdmin={profile?.role === "admin"} userId={user.id} />
+        <SalesList sales={salesResult.data || []} isAdmin={profileResult.data?.role === "admin"} userId={claims.sub} />
       </div>
     </DashboardLayout>
   )

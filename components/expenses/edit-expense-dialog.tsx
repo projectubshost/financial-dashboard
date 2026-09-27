@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import type { Expense } from "@/lib/types"
+import type { ExpenseRecord } from "@/lib/types"
 
 const EXPENSE_CATEGORIES = [
   "Rent",
@@ -34,7 +34,7 @@ const EXPENSE_CATEGORIES = [
 ]
 
 interface EditExpenseDialogProps {
-  expense: Expense
+  expense: ExpenseRecord
   open: boolean
   onOpenChange: (open: boolean) => void
 }

@@ -2,10 +2,10 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts"
-import type { Expense } from "@/lib/types"
+import type { ExpenseRecord } from "@/lib/types"
 
 interface ExpensesByCategoryChartProps {
-  expenses: Expense[]
+  expenses: ExpenseRecord[]
 }
 
 const COLORS = ["#10b981", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#14b8a6", "#f97316"]

@@ -6,21 +6,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Plus, Pencil, Trash2, Receipt } from "lucide-react"
-import type { Expense } from "@/lib/types"
+import type { ExpenseRecord } from "@/lib/types"
 import { AddExpenseDialog } from "./add-expense-dialog"
 import { EditExpenseDialog } from "./edit-expense-dialog"
 import { DeleteExpenseDialog } from "./delete-expense-dialog"
 
 interface ExpensesListProps {
-  expenses: Expense[]
+  expenses: ExpenseRecord[]
   isAdmin: boolean
   userId: string
 }
 
 export function ExpensesList({ expenses, isAdmin, userId }: ExpensesListProps) {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
-  const [editingExpense, setEditingExpense] = useState<Expense | null>(null)
-  const [deletingExpense, setDeletingExpense] = useState<Expense | null>(null)
+  const [editingExpense, setEditingExpense] = useState<ExpenseRecord | null>(null)
+  const [deletingExpense, setDeletingExpense] = useState<ExpenseRecord | null>(null)
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-IN", {
@@ -111,10 +111,10 @@ export function ExpensesList({ expenses, isAdmin, userId }: ExpensesListProps) {
                       {isAdmin && (
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
-                            <Button variant="ghost" size="sm" onClick={() => setEditingExpense(expense)}>
+                            <Button variant="ghost" size="sm" aria-label={`Edit ${expense.description}`} onClick={() => setEditingExpense(expense)}>
                               <Pencil className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="sm" onClick={() => setDeletingExpense(expense)}>
+                            <Button variant="ghost" size="sm" aria-label={`Delete ${expense.description}`} onClick={() => setDeletingExpense(expense)}>
                               <Trash2 className="h-4 w-4 text-red-600" />
                             </Button>
                           </div>

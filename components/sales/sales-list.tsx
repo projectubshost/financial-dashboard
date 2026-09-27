@@ -6,21 +6,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Plus, Pencil, Trash2, TrendingUp } from "lucide-react"
-import type { Sale } from "@/lib/types"
+import type { SaleRecord } from "@/lib/types"
 import { AddSaleDialog } from "./add-sale-dialog"
 import { EditSaleDialog } from "./edit-sale-dialog"
 import { DeleteSaleDialog } from "./delete-sale-dialog"
 
 interface SalesListProps {
-  sales: Sale[]
+  sales: SaleRecord[]
   isAdmin: boolean
   userId: string
 }
 
 export function SalesList({ sales, isAdmin, userId }: SalesListProps) {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
-  const [editingSale, setEditingSale] = useState<Sale | null>(null)
-  const [deletingSale, setDeletingSale] = useState<Sale | null>(null)
+  const [editingSale, setEditingSale] = useState<SaleRecord | null>(null)
+  const [deletingSale, setDeletingSale] = useState<SaleRecord | null>(null)
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-IN", {
@@ -115,10 +115,10 @@ export function SalesList({ sales, isAdmin, userId }: SalesListProps) {
                       {isAdmin && (
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
-                            <Button variant="ghost" size="sm" onClick={() => setEditingSale(sale)}>
+                            <Button variant="ghost" size="sm" aria-label={`Edit ${sale.description}`} onClick={() => setEditingSale(sale)}>
                               <Pencil className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="sm" onClick={() => setDeletingSale(sale)}>
+                            <Button variant="ghost" size="sm" aria-label={`Delete ${sale.description}`} onClick={() => setDeletingSale(sale)}>
                               <Trash2 className="h-4 w-4 text-red-600" />
                             </Button>
                           </div>

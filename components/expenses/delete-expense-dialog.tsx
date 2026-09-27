@@ -13,10 +13,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { AlertTriangle } from "lucide-react"
-import type { Expense } from "@/lib/types"
+import type { ExpenseRecord } from "@/lib/types"
 
 interface DeleteExpenseDialogProps {
-  expense: Expense
+  expense: ExpenseRecord
   open: boolean
   onOpenChange: (open: boolean) => void
 }
