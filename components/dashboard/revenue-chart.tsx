@@ -58,11 +58,11 @@ export function RevenueChart({ sales, expenses }: RevenueChartProps) {
                 border: "1px solid #e5e7eb",
                 borderRadius: "8px",
               }}
-              formatter={(value: number) =>
+              formatter={(value) =>
                 new Intl.NumberFormat("en-IN", {
                   style: "currency",
                   currency: "INR",
-                }).format(value)
+                }).format(Number(value ?? 0))
               }
             />
             <Legend />
