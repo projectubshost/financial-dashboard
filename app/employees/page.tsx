@@ -17,18 +17,18 @@ export default async function EmployeesPage() {
     redirect("/auth/login")
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("full_name, email, role")
-    .eq("id", claims.sub)
-    .maybeSingle()
+  const [profileResult, employeesResult] = await Promise.all([
+    supabase.from("profiles").select("full_name, email, role").eq("id", claims.sub).maybeSingle(),
+    supabase
+      .from("employees")
+      .select("id, user_id, full_name, position, salary, hire_date, status, created_at, updated_at")
+      .order("created_at", { ascending: false }),
+  ])
+  const profile = profileResult.data
+  const employees = employeesResult.data
   const isAdmin = profile?.role === "admin"
 
   if (isAdmin) {
-    const { data: employees } = await supabase
-      .from("employees")
-      .select("id, user_id, full_name, position, salary, hire_date, status, created_at, updated_at")
-      .order("created_at", { ascending: false })
 
     return (
       <DashboardLayout profile={profile}>
@@ -43,10 +43,7 @@ export default async function EmployeesPage() {
     )
   }
 
-  const { count } = await supabase
-    .from("employees")
-    .select("id", { count: "exact", head: true })
-    .eq("status", "active")
+  const count = employees?.filter((employee) => employee.status === "active").length ?? 0
 
   return (
     <DashboardLayout profile={profile}>
